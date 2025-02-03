@@ -3995,6 +3995,20 @@ public:
 
 #endif // BACKWARD_SYSTEM_LINUX
 
+namespace ext {
+  struct Default {};
+}
+
+template<typename T = ext::Default>
+inline FILE* get_file_pointer() {
+  return stderr;
+}
+
+template<typename T = ext::Default>
+inline std::ostream& get_ostream() {
+  return std::cerr;
+}
+
 class Printer {
 public:
   bool snippet;
@@ -4274,7 +4288,7 @@ public:
 
     Printer printer;
     printer.address = true;
-    printer.print(st, stderr);
+    printer.print(st, get_file_pointer());
 
 #if (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 700) || \
     (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200809L)
@@ -4474,7 +4488,7 @@ private:
     st.skip_n_firsts(skip_frames);
 
     printer.address = true;
-    printer.print(st, std::cerr);
+    printer.print(st, get_ostream());
   }
 };
 
