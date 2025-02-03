@@ -4016,6 +4016,7 @@ public:
     Colorize colorize(os);
     colorize.activate(color_mode, fp);
     print_stacktrace(st, os, colorize);
+    fflush(fp);
     return fp;
   }
 
@@ -4033,6 +4034,7 @@ public:
     Colorize colorize(os);
     colorize.activate(color_mode, fp);
     print_stacktrace(begin, end, os, thread_id, colorize);
+    fflush(fp);
     return fp;
   }
 
@@ -4160,8 +4162,24 @@ private:
 
 /*************** SIGNALS HANDLING ***************/
 
+namespace ext {
+  struct DefaultPrint {
+    static inline FILE* get_file_pointer() {
+      std::cout << "At default" << std::endl;
+      return stderr;
+    }
+
+    static inline std::ostream& get_ostream() {
+      std::cout << "At default ostream" << std::endl;
+      return std::cerr;
+    }
+  };
+}
+
+
 #if defined(BACKWARD_SYSTEM_LINUX) || defined(BACKWARD_SYSTEM_DARWIN)
 
+template<typename T = ext::DefaultPrint>
 class SignalHandling {
 public:
   static std::vector<int> make_default_signals() {
@@ -4274,7 +4292,7 @@ public:
 
     Printer printer;
     printer.address = true;
-    printer.print(st, stderr);
+    printer.print(st, T::get_file_pointer());
 
 #if (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 700) || \
     (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200809L)
@@ -4308,6 +4326,7 @@ private:
 
 #ifdef BACKWARD_SYSTEM_WINDOWS
 
+template<typename T = ext::DefaultPrint>
 class SignalHandling {
 public:
   SignalHandling(const std::vector<int> & = std::vector<int>())
@@ -4474,7 +4493,7 @@ private:
     st.skip_n_firsts(skip_frames);
 
     printer.address = true;
-    printer.print(st, std::cerr);
+    printer.print(st, T::get_ostream());
   }
 };
 
@@ -4482,6 +4501,7 @@ private:
 
 #ifdef BACKWARD_SYSTEM_UNKNOWN
 
+template<>
 class SignalHandling {
 public:
   SignalHandling(const std::vector<int> & = std::vector<int>()) {}
